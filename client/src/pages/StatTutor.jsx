@@ -7,11 +7,10 @@ export function StatTutor() {
   const [classSessions, setClassSession] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
-  const [loading, setLoading] = useState(false); // Re-enabled loading
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchClassSession() {
-      // Don't fetch if no selection has been made yet (optional)
       if (!selectedMonth || !selectedYear) return;
 
       setLoading(true);
@@ -33,7 +32,6 @@ export function StatTutor() {
     fetchClassSession();
   }, [selectedMonth, selectedYear]);
 
-  // Combined logic for calculations
   const statistics = useMemo(() => {
     const safeSessions = Array.isArray(classSessions) ? classSessions : [];
 
@@ -46,7 +44,7 @@ export function StatTutor() {
       let endMinutes = eh * 60 + em;
 
       if (endMinutes < startMinutes) {
-        endMinutes += 24 * 60; // Over-night session handling
+        endMinutes += 24 * 60;
       }
       return (endMinutes - startMinutes) / 60;
     }
@@ -64,7 +62,6 @@ export function StatTutor() {
       totalHours: totalHours.toFixed(2),
       totalIncome: totalIncome.toLocaleString(),
       totalClasses: safeSessions.length,
-      // You might need a unique count for students depending on your data structure
       totalStudents: [...new Set(safeSessions.map((s) => s.student_id))].length,
     };
   }, [classSessions]);
@@ -117,45 +114,39 @@ export function StatTutor() {
           </select>
         </div>
 
-        {loading ? (
-          <p>กำลังโหลดข้อมูล...</p>
-        ) : (
-          <>
-            <div className="d-flex gap-3 mt-4">
-              <div className="block-stat">
-                <h4>จำนวนชั่วโมงที่สอน</h4>
-                <p>{statistics.totalHours} ชม.</p>
-              </div>
-              <div className="block-stat">
-                <h4>จำนวนนักเรียน</h4>
-                <p>{statistics.totalStudents} คน</p>
-              </div>
-              <div className="block-stat">
-                <h4>จำนวนคลาสที่สอน</h4>
-                <p>{statistics.totalClasses} คลาส</p>
-              </div>
-              <div className="block-stat">
-                <h4>รายรับทั้งหมด</h4>
-                <p>{statistics.totalIncome} บาท</p>
-              </div>
+        {loading ? <p>กำลังโหลดข้อมูล...</p> : <p>โหลดข้อมูลสำเร็จ</p>}
+        <>
+          <div className="d-flex gap-3 mt-4">
+            <div className="block-stat">
+              <h4>จำนวนชั่วโมงที่สอน</h4>
+              <p>{statistics.totalHours} ชม.</p>
             </div>
+            <div className="block-stat">
+              <h4>จำนวนนักเรียน</h4>
+              <p>{statistics.totalStudents} คน</p>
+            </div>
+            <div className="block-stat">
+              <h4>จำนวนคลาสที่สอน</h4>
+              <p>{statistics.totalClasses} คลาส</p>
+            </div>
+            <div className="block-stat">
+              <h4>รายรับทั้งหมด</h4>
+              <p>{statistics.totalIncome} บาท</p>
+            </div>
+          </div>
 
-            <div className="mt-5">
-              <h3>รายละเอียดรายคลาส</h3>
-              <div className="session-list">
-                {classSessions.map((session, index) => (
-                  <div
-                    key={session.session_id || index}
-                    className="session-item"
-                  >
-                    {session.course_name || "ไม่มีชื่อคอร์ส"} -{" "}
-                    {session.start_time} ถึง {session.end_time}
-                  </div>
-                ))}
-              </div>
+          <div className="mt-5">
+            <h3>รายละเอียดรายคลาส</h3>
+            <div className="session-list">
+              {classSessions.map((session, index) => (
+                <div key={session.session_id || index} className="session-item">
+                  {session.course_name || "ไม่มีชื่อคอร์ส"} -{" "}
+                  {session.start_time} ถึง {session.end_time}
+                </div>
+              ))}
             </div>
-          </>
-        )}
+          </div>
+        </>
       </article>
     </>
   );
