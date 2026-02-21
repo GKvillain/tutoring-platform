@@ -1,0 +1,32 @@
+.selectStat {
+  border-radius: 15px;
+  padding: 2px 15px 2px 15px;
+  overflow: hidden;
+}
+
+.block-stat {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 5px;
+  border: 2px solid black;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.block-stat p {
+  font-size: 2rem;
+  text-align: center;
+}
+
+.btn-clear {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-clear:hover {
+  background-color: #c82333;
+}

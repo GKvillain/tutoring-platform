@@ -27,6 +27,13 @@ app.get("/api/students", async (req, res) => {
   res.json(data);
 });
 
+app.get("/api/classsession", async (req, res) => {
+  const { data, error } = await supabase.from("classsession").select("*");
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
