@@ -1,92 +1,44 @@
 import "./StatTutor.css";
 import "../App.css";
-import { useState, useEffect } from "react";
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Navigation from "../components/Navigation";
 
 export function StatTutor() {
   const [classSessions, setClassSession] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Re-enabled loading
 
   useEffect(() => {
-    console.log(
-      "Selected Month:",
-      selectedMonth,
-      "Selected Year:",
-      selectedYear,
-    );
-
-    // Don't fetch if both month and year are empty
-    if (!selectedMonth && !selectedYear) {
-      console.log("No month or year selected");
-      return;
-    }
-
     async function fetchClassSession() {
+      // Don't fetch if no selection has been made yet (optional)
+      if (!selectedMonth || !selectedYear) return;
+
+      setLoading(true);
       try {
-        setLoading(true);
-        console.log("Fetching data for:", {
-          month: selectedMonth,
-          year: selectedYear,
-        });
-
-        // Build URL based on selections
-        let url = "http://localhost:3000/api/classsession";
-        const params = [];
-
-        // Handle "all" option - you might want to not send the parameter at all
-        // or handle it differently based on your backend
-        if (selectedMonth && selectedMonth !== "all" && selectedMonth !== "") {
-          params.push(`month=${selectedMonth}`);
-        }
-
-        if (selectedYear && selectedYear !== "all" && selectedYear !== "") {
-          params.push(`year=${selectedYear}`);
-        }
-
-        // If we have parameters, add them to URL
-        if (params.length > 0) {
-          url += "?" + params.join("&");
-        }
-
-        console.log("Fetching from URL:", url);
-
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        const yearParam =
+          selectedYear === "all" ? "all" : parseInt(selectedYear) - 543;
+        const response = await fetch(
+          `http://localhost:3000/api/classsession?month=${selectedMonth}&year=${yearParam}`,
+        );
         const data = await response.json();
-        console.log("DATA FROM BACKEND:", data);
-
-        // Make sure we're setting an array
         setClassSession(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.log("Error fetching data:", error);
-        setClassSession([]); // Clear data on error
+        console.error("Failed to fetch sessions:", error);
       } finally {
         setLoading(false);
       }
     }
 
     fetchClassSession();
-  }, [selectedMonth, selectedYear]); // This should trigger when either changes
+  }, [selectedMonth, selectedYear]);
 
+  // Combined logic for calculations
   const statistics = useMemo(() => {
-    console.log("Recalculating statistics with:", classSessions);
-
     const safeSessions = Array.isArray(classSessions) ? classSessions : [];
 
     function calculateHours(startTime, endTime) {
       if (!startTime || !endTime) return 0;
-
       const [sh, sm] = startTime.split(":").map(Number);
       const [eh, em] = endTime.split(":").map(Number);
 
@@ -94,15 +46,13 @@ export function StatTutor() {
       let endMinutes = eh * 60 + em;
 
       if (endMinutes < startMinutes) {
-        endMinutes += 24 * 60;
+        endMinutes += 24 * 60; // Over-night session handling
       }
-
       return (endMinutes - startMinutes) / 60;
     }
 
     const totalHours = safeSessions.reduce((sum, session) => {
-      const hours = calculateHours(session.start_time, session.end_time);
-      return sum + hours;
+      return sum + calculateHours(session.start_time, session.end_time);
     }, 0);
 
     const totalIncome = safeSessions.reduce(
@@ -110,51 +60,25 @@ export function StatTutor() {
       0,
     );
 
-    const totalClasses = safeSessions.length;
-
-    const uniqueStudents = new Set(
-      safeSessions.map((session) => session.student_Id).filter((id) => id), // Filter out null/undefined
-    );
-
     return {
       totalHours: totalHours.toFixed(2),
-      totalIncome: totalIncome,
-      totalClasses,
-      totalStudents: uniqueStudents.size,
+      totalIncome: totalIncome.toLocaleString(),
+      totalClasses: safeSessions.length,
+      // You might need a unique count for students depending on your data structure
+      totalStudents: [...new Set(safeSessions.map((s) => s.student_id))].length,
     };
   }, [classSessions]);
-
-  // Handle month change
-  const handleMonthChange = (e) => {
-    const newMonth = e.target.value;
-    console.log("Month changed to:", newMonth);
-    setSelectedMonth(newMonth);
-  };
-
-  // Handle year change
-  const handleYearChange = (e) => {
-    const newYear = e.target.value;
-    console.log("Year changed to:", newYear);
-    setSelectedYear(newYear);
-  };
-
-  // Clear filters
-  const handleClearFilters = () => {
-    setSelectedMonth("");
-    setSelectedYear("");
-  };
 
   return (
     <>
       <Navigation />
-
       <article className="container">
         <h1 className="topic">รายงานสถิติการสอน</h1>
         <div className="d-flex align-items-center gap-3">
           <h3>รายงานสถิติการสอนทั้งหมด</h3>
           <select
             value={selectedMonth}
-            onChange={handleMonthChange}
+            onChange={(e) => setSelectedMonth(e.target.value)}
             className="selectStat"
           >
             <option value="" disabled hidden>
@@ -177,7 +101,7 @@ export function StatTutor() {
 
           <select
             value={selectedYear}
-            onChange={handleYearChange}
+            onChange={(e) => setSelectedYear(e.target.value)}
             className="selectStat"
           >
             <option value="" disabled hidden>
@@ -191,63 +115,47 @@ export function StatTutor() {
               2569
             </option>
           </select>
-
-          {(selectedMonth || selectedYear) && (
-            <button onClick={handleClearFilters} className="btn-clear">
-              ล้างตัวกรอง
-            </button>
-          )}
         </div>
 
-        {loading && <p>กำลังโหลด...</p>}
+        {loading ? (
+          <p>กำลังโหลดข้อมูล...</p>
+        ) : (
+          <>
+            <div className="d-flex gap-3 mt-4">
+              <div className="block-stat">
+                <h4>จำนวนชั่วโมงที่สอน</h4>
+                <p>{statistics.totalHours} ชม.</p>
+              </div>
+              <div className="block-stat">
+                <h4>จำนวนนักเรียน</h4>
+                <p>{statistics.totalStudents} คน</p>
+              </div>
+              <div className="block-stat">
+                <h4>จำนวนคลาสที่สอน</h4>
+                <p>{statistics.totalClasses} คลาส</p>
+              </div>
+              <div className="block-stat">
+                <h4>รายรับทั้งหมด</h4>
+                <p>{statistics.totalIncome} บาท</p>
+              </div>
+            </div>
 
-        {!loading && classSessions.length === 0 && (
-          <p>ไม่มีข้อมูลการสอนในช่วงเวลาที่เลือก</p>
+            <div className="mt-5">
+              <h3>รายละเอียดรายคลาส</h3>
+              <div className="session-list">
+                {classSessions.map((session, index) => (
+                  <div
+                    key={session.session_id || index}
+                    className="session-item"
+                  >
+                    {session.course_name || "ไม่มีชื่อคอร์ส"} -{" "}
+                    {session.start_time} ถึง {session.end_time}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
         )}
-
-        <div className="d-flex gap-3">
-          <div className="block-stat">
-            <h4>จำนวนชั่วโมงที่สอน</h4>
-            <p>{statistics.totalHours}</p>
-          </div>
-          <div className="block-stat">
-            <h4>จำนวนนักเรียน</h4>
-            <p>{statistics.totalStudents}</p>
-          </div>
-          <div className="block-stat">
-            <h4>จำนวนคลาสที่สอน</h4>
-            <p>{statistics.totalClasses}</p>
-          </div>
-          <div className="block-stat">
-            <h4>รายรับทั้งหมด</h4>
-            <p>{statistics.totalIncome}</p>
-          </div>
-        </div>
-
-        <div>
-          <h3>รายงานสถิติการสอนต่อคอร์ส</h3>
-          <div>
-            {classSessions.map((session) => {
-              // Calculate hours for display
-              const hours = (() => {
-                if (!session.start_time || !session.end_time) return 0;
-                const [sh, sm] = session.start_time.split(":").map(Number);
-                const [eh, em] = session.end_time.split(":").map(Number);
-                let startMinutes = sh * 60 + sm;
-                let endMinutes = eh * 60 + em;
-                if (endMinutes < startMinutes) endMinutes += 24 * 60;
-                return ((endMinutes - startMinutes) / 60).toFixed(1);
-              })();
-
-              return (
-                <div key={session.session_id}>
-                  {session.courseName || "ไม่มีชื่อคอร์ส"} - {hours} ชม.
-                  {session.price ? ` (ราคา: ${session.price} บาท)` : ""}
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </article>
     </>
   );

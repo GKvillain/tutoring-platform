@@ -28,10 +28,32 @@ app.get("/api/students", async (req, res) => {
 });
 
 app.get("/api/classsession", async (req, res) => {
-  const { data, error } = await supabase.from("classsession").select("*");
+  try {
+    const { month, year } = req.query;
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+    let query = supabase.from("classsession").select("*");
+
+    if (month !== "all" && year !== "all" && month && year) {
+      const startDate = `${year}-${month}-01`;
+
+      const nextMonth =
+        parseInt(month) === 12
+          ? `${parseInt(year) + 1}-01-01`
+          : `${year}-${String(parseInt(month) + 1).padStart(2, "0")}-01`;
+
+      query = query
+        .gte("session_date", startDate)
+        .lt("session_date", nextMonth);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error("Backend Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
