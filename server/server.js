@@ -56,6 +56,8 @@ app.get("/api/classsession", async (req, res) => {
   }
 });
 
+app.get("/api/StatTutor");
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
