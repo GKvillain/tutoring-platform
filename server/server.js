@@ -71,6 +71,25 @@ app.get("/api/statistics", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.get("/api/statisticsCourse", async (req, res) => {
+  try {
+    const { month, year } = req.query;
+
+    const { data, error } = await supabase.rpc("get_course_statistics", {
+      p_month: month,
+      p_year: year,
+    });
+
+    if (error) throw error;
+    // console.log("RPC DATA:", data);
+    // console.log("TYPE:", typeof data);
+    res.json(data);
+  } catch (err) {
+    console.error("RPC Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

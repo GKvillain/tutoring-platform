@@ -1,3 +1,4 @@
+// StatTutor.jsx - Updated version with improved structure
 import "./StatTutor.css";
 import "../App.css";
 import { useState, useEffect } from "react";
@@ -8,6 +9,7 @@ export function StatTutor() {
   const [selectedYear, setSelectedYear] = useState("");
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [statisticsCourse, setStatisticsCourse] = useState([]);
 
   useEffect(() => {
     async function fetchStatistics() {
@@ -24,10 +26,15 @@ export function StatTutor() {
         const res = await fetch(
           `http://localhost:3000/api/statistics?month=${selectedMonth}&year=${yearParam}`,
         );
+        const res2 = await fetch(
+          `http://localhost:3000/api/statisticsCourse?month=${selectedMonth}&year=${yearParam}`,
+        );
 
         const data = await res.json();
-        console.log(data);
+        const data2 = await res2.json();
         setStatistics(data);
+        setStatisticsCourse(data2);
+        console.log(data2);
       } catch (err) {
         console.error(err);
       } finally {
@@ -38,6 +45,13 @@ export function StatTutor() {
     fetchStatistics();
   }, [selectedMonth, selectedYear]);
 
+  const clearFilters = () => {
+    setSelectedMonth("");
+    setSelectedYear("");
+    setStatistics(null);
+    setStatisticsCourse([]);
+  };
+
   return (
     <>
       <Navigation />
@@ -45,8 +59,10 @@ export function StatTutor() {
         <h1 className="topic">รายงานสถิติการสอน</h1>
 
         {/* SELECT FILTER */}
-        <div className="d-flex align-items-center gap-3">
-          <h3>รายงานสถิติการสอนทั้งหมด</h3>
+        <div className="d-flex align-items-center gap-3 mb-4">
+          <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#495057" }}>
+            รายงานสถิติการสอนทั้งหมด
+          </h3>
 
           <select
             value={selectedMonth}
@@ -54,7 +70,7 @@ export function StatTutor() {
             className="selectStat"
           >
             <option value="" disabled hidden>
-              เดือน
+              เลือกเดือน
             </option>
             <option value="all">ทั้งหมด</option>
             <option value="01">มกราคม</option>
@@ -77,50 +93,118 @@ export function StatTutor() {
             className="selectStat"
           >
             <option value="" disabled hidden>
-              ปี
+              เลือกปี
             </option>
             <option value="all">ทั้งหมด</option>
             <option value="2568">2568</option>
             <option value="2569">2569</option>
           </select>
+
+          {(selectedMonth || selectedYear) && (
+            <button onClick={clearFilters} className="btn-clear">
+              ล้างตัวกรอง
+            </button>
+          )}
         </div>
 
-        {loading && <p>กำลังโหลดข้อมูล...</p>}
-        {!loading && statistics && <p>โหลดข้อมูลสำเร็จ</p>}
-
-        <div className="d-flex gap-3 mt-4">
-          <div className="block-stat">
-            <h4>จำนวนชั่วโมงที่สอน</h4>
-            <p>{statistics?.total_hours?.toFixed(2) || 0} ชม.</p>
+        {loading && (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
           </div>
+        )}
 
-          <div className="block-stat">
-            <h4>จำนวนนักเรียน</h4>
-            <p>{statistics?.total_students || 0} คน</p>
-          </div>
+        {!loading && statistics && (
+          <div className="success-message">โหลดข้อมูลสำเร็จ</div>
+        )}
 
-          <div className="block-stat">
-            <h4>จำนวนคลาสที่สอน</h4>
-            <p>{statistics?.total_classes || 0} คลาส</p>
-          </div>
+        {!loading && statistics && (
+          <>
+            <div className="d-flex gap-3 mt-4">
+              <div className="block-stat">
+                <h4>จำนวนชั่วโมงที่สอน</h4>
+                <p>{statistics?.total_hours?.toFixed(2) || 0} ชม.</p>
+              </div>
 
-          <div className="block-stat">
-            <h4>รายรับทั้งหมด</h4>
-            <p>{Number(statistics?.total_income || 0).toLocaleString()} บาท</p>
-          </div>
-        </div>
+              <div className="block-stat">
+                <h4>จำนวนนักเรียน</h4>
+                <p>{statistics?.total_students || 0} คน</p>
+              </div>
 
-        {loading ? (
-          <p>กำลังโหลดข้อมูล...</p>
-        ) : (
-          <div>
-            <h2>รายงานสถิติการสอนต่อคอร์ส</h2>
-            <div className="layout-course">
-              <h4>จำนวนชั่วโมงที่สอน</h4>
-              <h4>จำนวนนักเรียน</h4>
-              <h4>จำนวนคลาสที่สอน</h4>
-              <h4>รายรับต่อคอร์ส</h4>
+              <div className="block-stat">
+                <h4>จำนวนคลาสที่สอน</h4>
+                <p>{statistics?.total_classes || 0} คลาส</p>
+              </div>
+
+              <div className="block-stat">
+                <h4>รายรับทั้งหมด</h4>
+                <p>
+                  {Number(statistics?.total_income || 0).toLocaleString()} บาท
+                </p>
+              </div>
             </div>
+
+            <div className="mt-4">
+              <h2 style={{ color: "#495057", marginBottom: "1rem" }}>
+                รายงานสถิติการสอนต่อคอร์ส
+              </h2>
+
+              <div className="layout-course">
+                <h4>ชื่อคอร์ส</h4>
+                <h4>ชั่วโมง</h4>
+                <h4>นักเรียน</h4>
+                <h4>คลาส</h4>
+                <h4>รายรับ</h4>
+              </div>
+
+              <div className="box-course">
+                {Array.isArray(statisticsCourse) &&
+                statisticsCourse.length > 0 ? (
+                  statisticsCourse.map((stat) => (
+                    <div
+                      key={stat.course_name_thai}
+                      className="box-course-inner"
+                    >
+                      <h5>{stat.course_name_thai}</h5>
+                      <div className="box-course-inner-divide">
+                        <p>{stat.total_hours?.toFixed(2) || 0}</p>
+                        <p>{stat.total_students || 0}</p>
+                        <p>{stat.total_sessions || 0}</p>
+                        <p>
+                          {Number(stat.total_income || 0).toLocaleString()} บาท
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div
+                    style={{
+                      padding: "2rem",
+                      textAlign: "center",
+                      color: "#6c757d",
+                    }}
+                  >
+                    ไม่พบข้อมูลการสอนในเดือนและปีที่เลือก
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {!loading && !statistics && selectedMonth && selectedYear && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "3rem",
+              color: "#6c757d",
+              background: "#f8f9fa",
+              borderRadius: "10px",
+              marginTop: "2rem",
+            }}
+          >
+            <p style={{ fontSize: "1.2rem" }}>
+              กรุณาเลือกเดือนและปีเพื่อดูข้อมูล
+            </p>
           </div>
         )}
       </article>
