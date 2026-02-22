@@ -30,3 +30,9 @@
 .btn-clear:hover {
   background-color: #c82333;
 }
+.layout-course {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+  justify-content: flex-end;
+}

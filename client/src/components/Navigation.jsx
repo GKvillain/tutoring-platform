@@ -23,7 +23,7 @@ export default function Navigation() {
 
         {/* Navigation Links */}
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="ms-auto">
+          <Nav>
             {/* Teaching Dropdown */}
             <NavDropdown title="การสอนและคาบเรียน" id="teaching-dropdown">
               <NavDropdown.Item as={Link} to="/teaching/record">

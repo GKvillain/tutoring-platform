@@ -109,6 +109,20 @@ export function StatTutor() {
             <p>{Number(statistics?.total_income || 0).toLocaleString()} บาท</p>
           </div>
         </div>
+
+        {loading ? (
+          <p>กำลังโหลดข้อมูล...</p>
+        ) : (
+          <div>
+            <h2>รายงานสถิติการสอนต่อคอร์ส</h2>
+            <div className="layout-course">
+              <h4>จำนวนชั่วโมงที่สอน</h4>
+              <h4>จำนวนนักเรียน</h4>
+              <h4>จำนวนคลาสที่สอน</h4>
+              <h4>รายรับต่อคอร์ส</h4>
+            </div>
+          </div>
+        )}
       </article>
     </>
   );
