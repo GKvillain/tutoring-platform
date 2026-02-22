@@ -14,12 +14,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
-// Test endpoint
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Server is running!" });
 });
 
-// Get all students
 app.get("/api/students", async (req, res) => {
   const { data, error } = await supabase.from("student").select("*");
 
@@ -56,8 +54,23 @@ app.get("/api/classsession", async (req, res) => {
   }
 });
 
-app.get("/api/StatTutor");
+app.get("/api/statistics", async (req, res) => {
+  try {
+    const { month, year } = req.query;
 
+    const { data, error } = await supabase.rpc("get_statistics", {
+      p_month: month,
+      p_year: year,
+    });
+
+    if (error) throw error;
+
+    res.json(data[0]);
+  } catch (err) {
+    console.error("RPC Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
