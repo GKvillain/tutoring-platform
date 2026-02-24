@@ -18,6 +18,7 @@ If you are developing a production application, we recommend using TypeScript wi
 ถ้าพึ่ง clone repo ครั้งแรกทำตามนี้
 cd client
 npm install
+npm install lucide-react
 
 การรันเซิฟเว่อ
 cd server

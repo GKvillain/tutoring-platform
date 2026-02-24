@@ -1,6 +1,4 @@
 import "../App.css";
-import "Summary.css";
+import "./Summary.css";
 
-function Summary() {}
-
-export default Summary;
+export function Summary() {}
