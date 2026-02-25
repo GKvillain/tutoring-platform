@@ -54,6 +54,13 @@ app.get("/api/classsession", async (req, res) => {
   }
 });
 
+app.get("/api/test", async (req, res) => {
+  const { data, error } = await supabase.from("account").select("*").limit(1);
+
+  if (error) return res.json({ error: error.message });
+  res.json(data);
+});
+
 app.get("/api/statistics", async (req, res) => {
   try {
     const { month, year } = req.query;
@@ -82,14 +89,85 @@ app.get("/api/statisticsCourse", async (req, res) => {
     });
 
     if (error) throw error;
-    // console.log("RPC DATA:", data);
-    // console.log("TYPE:", typeof data);
     res.json(data);
   } catch (err) {
     console.error("RPC Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
+
+app.get("/api/dashboard", async (req, res) => {
+  try {
+    const { month, year } = req.query;
+
+    // Validate month and year
+    if (!month || !year) {
+      return res.status(400).json({ error: "Month and year are required" });
+    }
+
+    // Call all four RPC functions in parallel
+    const [incomeRes, sessionsRes, hoursRes, studentsRes] = await Promise.all([
+      supabase.rpc("get_total_income", {
+        p_month: parseInt(month),
+        p_year: parseInt(year),
+      }),
+      supabase.rpc("get_total_sessions", {
+        p_month: parseInt(month),
+        p_year: parseInt(year),
+      }),
+      supabase.rpc("get_total_hours_month_year", {
+        p_month: parseInt(month),
+        p_year: parseInt(year),
+      }),
+      supabase.rpc("get_student_count", {
+        p_month: parseInt(month),
+        p_year: parseInt(year),
+      }),
+    ]);
+
+    // Check for errors
+    if (incomeRes.error) {
+      console.error("Income RPC error:", incomeRes.error);
+      throw incomeRes.error;
+    }
+    if (sessionsRes.error) {
+      console.error("Sessions RPC error:", sessionsRes.error);
+      throw sessionsRes.error;
+    }
+    if (hoursRes.error) {
+      console.error("Hours RPC error:", hoursRes.error);
+      throw hoursRes.error;
+    }
+    if (studentsRes.error) {
+      console.error("Students RPC error:", studentsRes.error);
+      throw studentsRes.error;
+    }
+
+    // Log for debugging (remove in production)
+    // console.log("Dashboard data for:", { month, year });
+    // console.log("Income:", incomeRes.data);
+    // console.log("Sessions:", sessionsRes.data);
+    // console.log("Hours:", hoursRes.data);
+    // console.log("Students:", studentsRes.data);
+
+    // Send response with all four metrics
+    res.json({
+      total_income: incomeRes.data || 0,
+      total_sessions: sessionsRes.data || 0,
+      total_hours: hoursRes.data || 0,
+      total_students: studentsRes.data || 0,
+      month: month,
+      year: year,
+    });
+  } catch (err) {
+    console.error("Dashboard API error:", err);
+    res.status(500).json({
+      error: err.message,
+      details: "Failed to fetch dashboard statistics",
+    });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

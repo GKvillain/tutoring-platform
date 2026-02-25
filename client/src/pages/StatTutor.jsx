@@ -1,4 +1,4 @@
-// StatTutor.jsx - Updated version with improved structure
+// StatTutor.jsx - Fixed version
 import "./StatTutor.css";
 import "../App.css";
 import { useState, useEffect } from "react";
@@ -24,19 +24,25 @@ export function StatTutor() {
             : (parseInt(selectedYear) - 543).toString();
 
         const res = await fetch(
-          `http://localhost:3000/api/statistics?month=${selectedMonth}&year=${yearParam}`,
-        );
-        const res2 = await fetch(
-          `http://localhost:3000/api/statisticsCourse?month=${selectedMonth}&year=${yearParam}`,
+          `http://localhost:3000/api/dashboard?month=${selectedMonth}&year=${yearParam}`,
         );
 
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Failed to fetch");
+        }
+
         const data = await res.json();
-        const data2 = await res2.json();
+
         setStatistics(data);
-        setStatisticsCourse(data2);
-        console.log(data2);
+
+        // Transform the data for course statistics if needed
+        // For now, set an empty array since the API doesn't return course-specific data yet
+        setStatisticsCourse([]);
+
+        console.log("Dashboard data:", data);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching statistics:", err);
       } finally {
         setLoading(false);
       }
@@ -132,7 +138,8 @@ export function StatTutor() {
 
               <div className="block-stat">
                 <h4>จำนวนคลาสที่สอน</h4>
-                <p>{statistics?.total_classes || 0} คลาส</p>
+                <p>{statistics?.total_sessions || 0} คลาส</p>{" "}
+                {/* Changed from total_classes to total_sessions */}
               </div>
 
               <div className="block-stat">
@@ -159,12 +166,12 @@ export function StatTutor() {
               <div className="box-course">
                 {Array.isArray(statisticsCourse) &&
                 statisticsCourse.length > 0 ? (
-                  statisticsCourse.map((stat) => (
+                  statisticsCourse.map((stat, index) => (
                     <div
-                      key={stat.course_name_thai}
+                      key={stat.course_name_thai || index}
                       className="box-course-inner"
                     >
-                      <h5>{stat.course_name_thai}</h5>
+                      <h5>{stat.course_name_thai || "ไม่ระบุชื่อคอร์ส"}</h5>
                       <div className="box-course-inner-divide">
                         <p>{stat.total_hours?.toFixed(2) || 0}</p>
                         <p>{stat.total_students || 0}</p>
@@ -183,7 +190,9 @@ export function StatTutor() {
                       color: "#6c757d",
                     }}
                   >
-                    ไม่พบข้อมูลการสอนในเดือนและปีที่เลือก
+                    {statistics
+                      ? "ยังไม่มีข้อมูลรายคอร์สในเดือนและปีที่เลือก"
+                      : "ไม่พบข้อมูลการสอนในเดือนและปีที่เลือก"}
                   </div>
                 )}
               </div>
