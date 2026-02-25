@@ -100,12 +100,10 @@ app.get("/api/dashboard", async (req, res) => {
   try {
     const { month, year } = req.query;
 
-    // Validate month and year
     if (!month || !year) {
       return res.status(400).json({ error: "Month and year are required" });
     }
 
-    // Call all four RPC functions in parallel
     const [incomeRes, sessionsRes, hoursRes, studentsRes] = await Promise.all([
       supabase.rpc("get_total_income", {
         p_month: parseInt(month),
@@ -166,6 +164,18 @@ app.get("/api/dashboard", async (req, res) => {
       details: "Failed to fetch dashboard statistics",
     });
   }
+});
+
+app.get("/api/summaryeachcourse", async (req, res) => {
+  const { month, year } = req.query;
+
+  const { data, error } = await supabase.rpc("get_course_monthly_summary", {
+    p_month: month,
+    p_year: year,
+  });
+
+  if (error) return res.json({ error: error.message });
+  res.json(data);
 });
 
 const PORT = process.env.PORT || 3000;

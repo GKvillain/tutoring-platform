@@ -27,18 +27,23 @@ export function StatTutor() {
           `http://localhost:3000/api/dashboard?month=${selectedMonth}&year=${yearParam}`,
         );
 
+        const res2 = await fetch(
+          `http://localhost:3000/api/summaryeachcourse?month=${selectedMonth}&year=${yearParam}`,
+        );
+
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.error || "Failed to fetch");
         }
 
         const data = await res.json();
+        const data2 = await res2.json();
 
         setStatistics(data);
 
         // Transform the data for course statistics if needed
         // For now, set an empty array since the API doesn't return course-specific data yet
-        setStatisticsCourse([]);
+        setStatisticsCourse(data2);
 
         console.log("Dashboard data:", data);
       } catch (err) {
@@ -171,7 +176,7 @@ export function StatTutor() {
                       key={stat.course_name_thai || index}
                       className="box-course-inner"
                     >
-                      <h5>{stat.course_name_thai || "ไม่ระบุชื่อคอร์ส"}</h5>
+                      <h5>{stat.course_name || "ไม่ระบุชื่อคอร์ส"}</h5>
                       <div className="box-course-inner-divide">
                         <p>{stat.total_hours?.toFixed(2) || 0}</p>
                         <p>{stat.total_students || 0}</p>
